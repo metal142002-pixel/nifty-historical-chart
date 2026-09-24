@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>NIFTY 50</title>
+
+    <link
+        rel="stylesheet"
+        href="/style.css"
+    >
+
+    <!-- Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+
+
+<body>
+
+    <!-- TOP BAR -->
+
+    <div id="topbar">
+
+        <div id="symbol">
+            NIFTY 50
+        </div>
+
+        <select id="timeframe">
+
+            <option value="1m">1m</option>
+
+            <option value="5m" selected>5m</option>
+
+            <option value="15m">15m</option>
+
+            <option value="30m">30m</option>
+
+            <option value="1h">1h</option>
+
+            <option value="2h">2h</option>
+
+            <option value="4h">4h</option>
+
+            <option value="1d">1D</option>
+
+        </select>
+
+        <button
+            id="resetZoom"
+            title="Reset">
+            ⟳
+        </button>
+
+    </div>
+
+
+    <!-- CHART -->
+
+    <div id="chart"></div>
+
+
+    <!-- DRAWING LAYER -->
+
+    <svg
+        id="drawingLayer"
+        xmlns="http://www.w3.org/2000/svg">
+    </svg>
+
+
+    <!-- LEFT TOOLBAR -->
+
+    <div id="drawingToolbar">
+
+        <button
+            class="toolButton"
+            id="selectTool"
+            title="Select">
+            ⬆
+        </button>
+
+        <button
+            class="toolButton"
+            id="trendlineTool"
+            title="Trend Line">
+            ╱
+        </button>
+
+        <button
+            class="toolButton"
+            id="rectangleTool"
+            title="Rectangle">
+            ▱
+        </button>
+
+        <button
+            class="toolButton"
+            id="textTool"
+            title="Text">
+            T
+        </button>
+
+        <div class="toolSeparator"></div>
+
+        <button
+            class="toolButton"
+            id="horizontalLineTool"
+            title="Horizontal Line">
+            ─
+        </button>
+
+        <button
+            class="toolButton"
+            id="verticalLineTool"
+            title="Vertical Line">
+            │
+        </button>
+
+        <button
+            class="toolButton"
+            id="percentageTool"
+            title="Percentage">
+            %
+        </button>
+
+        <button
+            class="toolButton"
+            id="priceMeasurementTool"
+            title="Price Measurement">
+            $
+        </button>
+
+        <button
+            class="toolButton"
+            id="timeMeasurementTool"
+            title="Time Measurement">
+            ⏱
+        </button>
+
+        <button
+            class="toolButton"
+            id="riskRewardTool"
+            title="Risk / Reward">
+            🎯
+        </button>
+
+        <div class="toolSeparator"></div>
+
+        <button
+            class="toolButton"
+            id="toggleDrawings"
+            title="Hide / Show Drawings">
+            ◉
+        </button>
+
+        <button
+            class="toolButton"
+            id="deleteSelected"
+            title="Delete Selected">
+            🗑
+        </button>
+
+        <button
+            class="toolButton"
+            id="deleteAll"
+            title="Delete All">
+            ✕
+        </button>
+
+    </div>
+
+
+    <!-- APP JS -->
+
+    <script src="/app.js"></script>
+
+</body>
+
+</html>
