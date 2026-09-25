@@ -204,6 +204,62 @@ def frontend_files(filename):
 @app.route("/api/data")
 def get_data():
 
+    timeframe = request.args.get("timeframe", "5m")
+
+    if timeframe not in timeframe_data:
+        return jsonify({"error": "Invalid timeframe"}), 400
+
+    data = timeframe_data[timeframe]
+
+    start = request.args.get("start")
+    end = request.args.get("end")
+
+    # Filter date range
+    if start:
+        try:
+            data = data[data.index >= pd.Timestamp(start)]
+        except Exception:
+            return jsonify({"error": "Invalid start date"}), 400
+
+    if end:
+        try:
+            data = data[data.index <= pd.Timestamp(end)]
+        except Exception:
+            return jsonify({"error": "Invalid end date"}), 400
+
+    # -----------------------------------------------------
+    # LIMIT INITIAL DATA
+    # -----------------------------------------------------
+
+    MAX_CANDLES = 50000
+
+    if len(data) > MAX_CANDLES:
+        data = data.iloc[-MAX_CANDLES:]
+
+    # -----------------------------------------------------
+    # FAST CONVERSION
+    # -----------------------------------------------------
+
+    timestamps = (data.index.astype("int64") // 1_000_000_000).tolist()
+
+    opens = data["Open"].tolist()
+    highs = data["High"].tolist()
+    lows = data["Low"].tolist()
+    closes = data["Close"].tolist()
+
+    candles = [
+        {
+            "time": int(timestamps[i]),
+            "open": float(opens[i]),
+            "high": float(highs[i]),
+            "low": float(lows[i]),
+            "close": float(closes[i])
+        }
+        for i in range(len(timestamps))
+    ]
+
+    return jsonify(candles)
+
     timeframe = request.args.get(
         "timeframe",
         "5m"
