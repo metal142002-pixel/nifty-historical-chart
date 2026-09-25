@@ -217,46 +217,42 @@ def get_data():
     # Filter date range
     if start:
         try:
-            data = data[data.index >= pd.Timestamp(start)]
+            data = data.loc[data.index >= pd.Timestamp(start)]
         except Exception:
             return jsonify({"error": "Invalid start date"}), 400
 
     if end:
         try:
-            data = data[data.index <= pd.Timestamp(end)]
+            data = data.loc[data.index <= pd.Timestamp(end)]
         except Exception:
             return jsonify({"error": "Invalid end date"}), 400
 
-    # -----------------------------------------------------
-    # LIMIT INITIAL DATA
-    # -----------------------------------------------------
-
-    MAX_CANDLES = 50000
+    # Maximum candles returned in one request
+    MAX_CANDLES = 20000
 
     if len(data) > MAX_CANDLES:
         data = data.iloc[-MAX_CANDLES:]
 
-    # -----------------------------------------------------
-    # FAST CONVERSION
-    # -----------------------------------------------------
+    # Convert timestamps directly
+    timestamps = (
+        data.index.astype("int64") // 1_000_000_000
+    ).to_numpy()
 
-    timestamps = (data.index.astype("int64") // 1_000_000_000).tolist()
+    opens = data["Open"].to_numpy()
+    highs = data["High"].to_numpy()
+    lows = data["Low"].to_numpy()
+    closes = data["Close"].to_numpy()
 
-    opens = data["Open"].tolist()
-    highs = data["High"].tolist()
-    lows = data["Low"].tolist()
-    closes = data["Close"].tolist()
+    candles = []
 
-    candles = [
-        {
+    for i in range(len(data)):
+        candles.append({
             "time": int(timestamps[i]),
             "open": float(opens[i]),
             "high": float(highs[i]),
             "low": float(lows[i]),
             "close": float(closes[i])
-        }
-        for i in range(len(timestamps))
-    ]
+        })
 
     return jsonify(candles)
 
