@@ -139,23 +139,28 @@ def get_data():
         except Exception:
             pass
 
-    # Convert Pandas datetime to Unix timestamp
-    timestamps = [
-        int(pd.Timestamp(x).timestamp())
-        for x in data.index
+    # Convert datetime index to Unix seconds
+    timestamps = (
+        data.index.astype("int64") // 1_000_000_000
+    ).tolist()
+
+    # Convert OHLC data to Python lists
+    opens = data["Open"].tolist()
+    highs = data["High"].tolist()
+    lows = data["Low"].tolist()
+    closes = data["Close"].tolist()
+
+    # Build response efficiently
+    result = [
+        {
+            "time": int(timestamps[i]),
+            "open": float(opens[i]),
+            "high": float(highs[i]),
+            "low": float(lows[i]),
+            "close": float(closes[i])
+        }
+        for i in range(len(data))
     ]
-
-    result = []
-
-    for i in range(len(data)):
-
-        result.append({
-            "time": timestamps[i],
-            "open": float(data["Open"].iloc[i]),
-            "high": float(data["High"].iloc[i]),
-            "low": float(data["Low"].iloc[i]),
-            "close": float(data["Close"].iloc[i])
-        })
 
     return jsonify(result)
 
