@@ -4,10 +4,12 @@ import os
 
 
 # =========================================================
-# SETTINGS
+# PATHS
 # =========================================================
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
 
 CSV_FILE = os.path.join(
     BASE_DIR,
@@ -34,7 +36,10 @@ app = Flask(
 # LOAD CSV
 # =========================================================
 
+print("")
+print("=" * 60)
 print("Loading NIFTY data...")
+print("=" * 60)
 
 df = pd.read_csv(
     CSV_FILE,
@@ -74,6 +79,7 @@ for col in [
     "Low",
     "Close"
 ]:
+
     df[col] = pd.to_numeric(
         df[col],
         errors="coerce"
@@ -81,7 +87,7 @@ for col in [
 
 
 # =========================================================
-# REMOVE INVALID ROWS
+# REMOVE INVALID DATA
 # =========================================================
 
 df = df.dropna(
@@ -99,10 +105,21 @@ df = df.dropna(
 # SORT DATA
 # =========================================================
 
-df = df.sort_values("Datetime")
+df = df.sort_values(
+    "Datetime"
+)
 
-df = df.set_index("Datetime")
 
+# =========================================================
+# SET DATETIME AS INDEX
+# =========================================================
+
+df = df.set_index(
+    "Datetime"
+)
+
+
+# Keep only OHLC
 df = df[
     [
         "Open",
@@ -114,33 +131,29 @@ df = df[
 
 
 print(
-    f"Total 1-minute candles: {len(df):,}"
+    "Total 1-minute candles:",
+    len(df)
 )
 
 print(
-    f"From: {df.index.min()}"
+    "From:",
+    df.index.min()
 )
 
 print(
-    f"To:   {df.index.max()}"
+    "To:",
+    df.index.max()
 )
 
 
 # =========================================================
-# MARKET SETTINGS
-# =========================================================
-
-MARKET_OPEN = "09:15"
-MARKET_CLOSE = "15:30"
-
-
-# =========================================================
-# CREATE INTRADAY TIMEFRAME
+# TIMEFRAME FUNCTIONS
 # =========================================================
 
 def create_timeframe(data, minutes):
 
     if minutes == 1:
+
         return data
 
     rule = f"{minutes}min"
@@ -165,10 +178,6 @@ def create_timeframe(data, minutes):
     return result
 
 
-# =========================================================
-# CREATE DAILY TIMEFRAME
-# =========================================================
-
 def create_daily(data):
 
     result = data.resample(
@@ -182,14 +191,19 @@ def create_daily(data):
         }
     )
 
-    return result.dropna()
+    result = result.dropna()
+
+    return result
 
 
 # =========================================================
 # CREATE ALL TIMEFRAMES
 # =========================================================
 
+print("")
+print("=" * 60)
 print("Creating timeframe data...")
+print("=" * 60)
 
 timeframe_data = {}
 
@@ -234,22 +248,60 @@ timeframe_data["1d"] = create_daily(
 )
 
 
+print("")
 print("All timeframes ready.")
 
+print(
+    "1m:",
+    len(timeframe_data["1m"]),
+    "candles"
+)
+
+print(
+    "5m:",
+    len(timeframe_data["5m"]),
+    "candles"
+)
+
+print(
+    "15m:",
+    len(timeframe_data["15m"]),
+    "candles"
+)
+
+print(
+    "30m:",
+    len(timeframe_data["30m"]),
+    "candles"
+)
+
+print(
+    "1h:",
+    len(timeframe_data["1h"]),
+    "candles"
+)
+
+print(
+    "2h:",
+    len(timeframe_data["2h"]),
+    "candles"
+)
+
+print(
+    "4h:",
+    len(timeframe_data["4h"]),
+    "candles"
+)
+
+print(
+    "1d:",
+    len(timeframe_data["1d"]),
+    "candles"
+)
+
 
 # =========================================================
-# PRINT TIMEFRAME INFORMATION
-# =========================================================
-
-for name, data in timeframe_data.items():
-
-    print(
-        f"{name}: {len(data):,} candles"
-    )
-
-
-# =========================================================
-# FRONTEND
+# FRONTEND ROUTES
 # =========================================================
 
 @app.route("/")
@@ -271,7 +323,7 @@ def frontend_files(filename):
 
 
 # =========================================================
-# API - INFORMATION
+# API INFO
 # =========================================================
 
 @app.route("/api/info")
@@ -325,7 +377,7 @@ def info():
 
 
 # =========================================================
-# API - CANDLE DATA
+# API DATA
 # =========================================================
 
 @app.route("/api/data")
@@ -338,14 +390,15 @@ def get_data():
 
 
     # -----------------------------------------------------
-    # CHECK TIMEFRAME
+    # Validate timeframe
     # -----------------------------------------------------
 
     if timeframe not in timeframe_data:
 
         return jsonify(
             {
-                "error": "Invalid timeframe"
+                "error":
+                "Invalid timeframe"
             }
         ), 400
 
@@ -356,60 +409,67 @@ def get_data():
 
 
     # -----------------------------------------------------
-    # OPTIONAL START DATE
+    # Optional start date
     # -----------------------------------------------------
 
     start = request.args.get(
         "start"
     )
 
+
     if start:
 
         try:
 
             data = data.loc[
-                data.index >= pd.Timestamp(start)
+                data.index
+                >= pd.Timestamp(start)
             ]
 
         except Exception:
 
             return jsonify(
                 {
-                    "error": "Invalid start date"
+                    "error":
+                    "Invalid start date"
                 }
             ), 400
 
 
     # -----------------------------------------------------
-    # OPTIONAL END DATE
+    # Optional end date
     # -----------------------------------------------------
 
     end = request.args.get(
         "end"
     )
 
+
     if end:
 
         try:
 
             data = data.loc[
-                data.index <= pd.Timestamp(end)
+                data.index
+                <= pd.Timestamp(end)
             ]
 
         except Exception:
 
             return jsonify(
                 {
-                    "error": "Invalid end date"
+                    "error":
+                    "Invalid end date"
                 }
             ), 400
 
 
     # -----------------------------------------------------
-    # LIMIT RESPONSE SIZE
+    # Limit API response
     # -----------------------------------------------------
 
     MAX_CANDLES = 20000
+
 
     if len(data) > MAX_CANDLES:
 
@@ -418,26 +478,21 @@ def get_data():
         ]
 
 
-    # -----------------------------------------------------
-    # CONVERT DATETIME TO UNIX SECONDS
-    #
+    # =====================================================
     # IMPORTANT:
-    # Lightweight Charts expects Unix timestamp
-    # in SECONDS.
-    #
-    # pandas stores datetime as nanoseconds.
-    #
-    # 1,000,000,000 nanoseconds = 1 second
-    # -----------------------------------------------------
+    # CREATE CORRECT UNIX TIMESTAMPS
+    # =====================================================
 
-    timestamps = (
-        data.index.astype("int64")
-        // 1_000_000_000
-    ).to_numpy()
+    timestamps = [
+        int(
+            pd.Timestamp(x).timestamp()
+        )
+        for x in data.index
+    ]
 
 
     # -----------------------------------------------------
-    # CONVERT OHLC COLUMNS TO NUMPY
+    # Convert OHLC to NumPy arrays
     # -----------------------------------------------------
 
     opens = data[
@@ -458,18 +513,27 @@ def get_data():
 
 
     # -----------------------------------------------------
-    # BUILD CANDLE JSON
+    # Create response
     # -----------------------------------------------------
 
     candles = []
 
-    for i in range(len(data)):
+
+    for i in range(
+        len(data)
+    ):
 
         candles.append(
             {
                 "time": int(
                     timestamps[i]
                 ),
+
+                # TEMPORARY DEBUG FIELD
+                # We will remove this after
+                # confirming timestamps.
+                "debug_datetime":
+                    str(data.index[i]),
 
                 "open": float(
                     opens[i]
@@ -490,10 +554,6 @@ def get_data():
         )
 
 
-    # -----------------------------------------------------
-    # RETURN JSON
-    # -----------------------------------------------------
-
     return jsonify(
         candles
     )
@@ -506,33 +566,19 @@ def get_data():
 if __name__ == "__main__":
 
     print("")
-    print(
-        "=" * 55
-    )
-
-    print(
-        "       NIFTY 50 HISTORICAL CHART"
-    )
-
-    print(
-        "=" * 55
-    )
+    print("=" * 60)
+    print("       NIFTY 50 HISTORICAL CHART")
+    print("=" * 60)
 
     print("")
-
-    print(
-        "Open in browser:"
-    )
+    print("Open in browser:")
 
     print(
         "http://127.0.0.1:5000"
     )
 
     print("")
-
-    print(
-        "=" * 55
-    )
+    print("=" * 60)
 
 
     app.run(
