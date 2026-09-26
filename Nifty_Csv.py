@@ -121,46 +121,140 @@ def get_data():
 
     data = timeframe_data[timeframe]
 
-    # Optional date filtering
+    # --------------------------------------------------------
+    # PAGINATION
+    # --------------------------------------------------------
+
+    try:
+        offset = int(
+            request.args.get(
+                "offset",
+                0
+            )
+        )
+    except Exception:
+        offset = 0
+
+    try:
+        limit = int(
+            request.args.get(
+                "limit",
+                50000
+            )
+        )
+    except Exception:
+        limit = 50000
+
+    # Safety checks
+
+    if offset < 0:
+        offset = 0
+
+    if limit <= 0:
+        limit = 50000
+
+    if limit > 50000:
+        limit = 50000
+
+
+    # --------------------------------------------------------
+    # OPTIONAL DATE FILTERING
+    # --------------------------------------------------------
+
     start = request.args.get("start")
     end = request.args.get("end")
 
     if start:
+
         try:
+
             start_date = pd.to_datetime(start)
-            data = data[data.index >= start_date]
+
+            data = data[
+                data.index >= start_date
+            ]
+
         except Exception:
+
             pass
+
 
     if end:
+
         try:
+
             end_date = pd.to_datetime(end)
-            data = data[data.index <= end_date]
+
+            data = data[
+                data.index <= end_date
+            ]
+
         except Exception:
+
             pass
 
-    # Convert datetime index to Unix seconds
+
+    # --------------------------------------------------------
+    # GET ONLY REQUESTED CHUNK
+    # --------------------------------------------------------
+
+    chunk = data.iloc[
+        offset:
+        offset + limit
+    ]
+
+
+    # --------------------------------------------------------
+    # CONVERT DATETIME TO UNIX SECONDS
+    # --------------------------------------------------------
+
     timestamps = (
-        data.index.astype("int64") // 1_000_000_000
+        chunk.index.astype("int64")
+        // 1_000_000_000
     ).tolist()
 
-    # Convert OHLC data to Python lists
-    opens = data["Open"].tolist()
-    highs = data["High"].tolist()
-    lows = data["Low"].tolist()
-    closes = data["Close"].tolist()
 
-    # Build response efficiently
+    # --------------------------------------------------------
+    # CONVERT OHLC TO PYTHON LISTS
+    # --------------------------------------------------------
+
+    opens = chunk["Open"].tolist()
+
+    highs = chunk["High"].tolist()
+
+    lows = chunk["Low"].tolist()
+
+    closes = chunk["Close"].tolist()
+
+
+    # --------------------------------------------------------
+    # BUILD RESPONSE
+    # --------------------------------------------------------
+
     result = [
+
         {
-            "time": int(timestamps[i]),
-            "open": float(opens[i]),
-            "high": float(highs[i]),
-            "low": float(lows[i]),
-            "close": float(closes[i])
+            "time":
+                int(timestamps[i]),
+
+            "open":
+                float(opens[i]),
+
+            "high":
+                float(highs[i]),
+
+            "low":
+                float(lows[i]),
+
+            "close":
+                float(closes[i])
         }
-        for i in range(len(data))
+
+        for i in range(
+            len(chunk)
+        )
     ]
+
 
     return jsonify(result)
 
@@ -171,6 +265,7 @@ def get_data():
 
 @app.route("/")
 def index():
+
     return send_from_directory(
         FRONTEND_FOLDER,
         "index.html"
@@ -179,6 +274,7 @@ def index():
 
 @app.route("/<path:path>")
 def frontend_files(path):
+
     return send_from_directory(
         FRONTEND_FOLDER,
         path
